@@ -2,9 +2,11 @@ package dev.steenbakker.mobile_scanner
 
 import android.app.Activity
 import android.graphics.Rect
+import android.media.CamcorderProfile
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.util.Size
 import android.view.Surface
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -16,6 +18,7 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import dev.steenbakker.mobile_scanner.objects.DetectionSpeed
 import dev.steenbakker.mobile_scanner.objects.MobileScannerStartParameters
+import io.flutter.Log
 import io.flutter.view.TextureRegistry
 import kotlin.math.roundToInt
 
@@ -171,9 +174,11 @@ class MobileScanner(
             val surfaceProvider = Preview.SurfaceProvider { request ->
                 val texture = textureEntry!!.surfaceTexture()
                 texture.setDefaultBufferSize(
-                    request.resolution.width,
-                    request.resolution.height
+                    1920, //request.resolution.width,
+                    1080, //request.resolution.height
                 )
+
+                Log.d("Barcode Scanner", "Requested resolution: ${request.resolution.width}, ${request.resolution.height}")
 
                 val surface = Surface(texture)
                 request.provideSurface(surface, executor) { }
@@ -186,7 +191,17 @@ class MobileScanner(
             // Build the analyzer to be passed on to MLKit
             val analysisBuilder = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-//                analysisBuilder.setTargetResolution(Size(1440, 1920))
+            analysisBuilder.setTargetResolution(Size(1080, 1920))
+
+            /*
+            val camProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH)
+            analysisBuilder.setTargetResolution(
+                Size(camProfile.videoFrameWidth, camProfile.videoFrameHeight)
+            )
+            Log.d("Barcode Scanner", "CamcorderProfile: ${camProfile.videoFrameWidth}, ${camProfile.videoFrameHeight}")
+
+             */
+
             val analysis = analysisBuilder.build().apply { setAnalyzer(executor, captureOutput) }
 
             camera = cameraProvider!!.bindToLifecycle(
